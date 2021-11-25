@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>WebSocket demo</title>
+    </head>
+    <body>
+        <p class="text">Hello world</p>
+        <script>
+            window.addEventListener("DOMContentLoaded", () => {
+                const websocket = new WebSocket("ws://localhost:8000/");
+                websocket.onmessage = ({ data }) => {
+                    document.querySelector(".text").textContent = data;
+                    //const event = JSON.parse(data);
+                };
+            });
+        </script>
+    </body>
+</html>
