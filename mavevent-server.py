@@ -27,6 +27,9 @@ MAVEVENT_PARSE_FUNCS = {
 }
 
 def mavevent_recv(connection_str, event_queue):
+    '''
+    Parse select messages from a MAVLink stream and add them to a queue
+    '''
     mavconn = mavutil.mavlink_connection(connection_str)
     mavconn.wait_heartbeat()
     while True:
@@ -48,7 +51,7 @@ mavevent_state       = {}    # current state accumulated from prior events
 
 async def mavevent_session(websocket, path):
     '''
-    Handle a websocket session for a client waiting for MAVLink events
+    Handle a websocket session for a client waiting for events
     '''
     mavevent_connections.add(websocket)
     try:
@@ -79,7 +82,9 @@ async def mavevent_serve(event_queue, host=None, port=None):
 ###############################################################################
 # ARGUMENT PARSING AND INITIALIZATION
 
-argparser = argparse.ArgumentParser(description='')
+argparser = argparse.ArgumentParser(
+    description='Serve select events from a MAVLink stream via websockets'
+)
 argparser.add_argument(
     '--host', nargs='?', default=None,
     help=(
