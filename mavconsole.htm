@@ -1,16 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <meta charset="UTF-8">
         <title>WebSocket demo</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""></script>
+        <style>
+            .ua_icon { border: none; background-color: transparent; }
+        </style>
     </head>
     <body>
         <p class="text">Hello world</p>
+
+        <div id="map" style="height: 480px;"></div>
         <script>
+            var mymap = L.map('map').setView([0., 0.], 1);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(mymap);
+
+            plane_svg = '<svg viewBox="0 0 300 300" width="50" height="50" xmlns="http://www.w3.org/2000/svg"><g><path d="M134.875,19.74c0.04-22.771,34.363-22.771,34.34,0.642v95.563L303,196.354v35.306l-133.144-43.821v71.424l30.813,24.072v27.923l-47.501-14.764l-47.501,14.764v-27.923l30.491-24.072v-71.424L3,231.66v-35.306l131.875-80.409V19.74z"/></g></svg>';
+
+            var myIcon = L.divIcon({
+                className: 'ua_icon',
+                html: plane_svg,
+                iconSize: [50, 50],
+                iconAnchor: [25, 25]
+            });
+
+            var marker = null;
+
             window.addEventListener("DOMContentLoaded", () => {
                 const websocket = new WebSocket("ws://localhost:8000/");
                 websocket.onmessage = ({ data }) => {
-                    document.querySelector(".text").textContent = data;
-                    //const event = JSON.parse(data);
+                    const event = JSON.parse(data);
+
+                    if (event.hasOwnProperty('ua_pos')) {
+                        pos = L.latLng(event.ua_pos.lat, event.ua_pos.lon)
+                        if (marker === null) {
+                            marker = L.marker(pos, {icon: myIcon}).addTo(mymap);
+                            mymap.setView(pos, 14)
+                        } else {
+                            marker.setLatLng(pos);
+                        }
+                    }
                 };
             });
         </script>
