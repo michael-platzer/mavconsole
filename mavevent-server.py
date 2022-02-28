@@ -14,6 +14,10 @@ import argparse
 from pymavlink import mavutil
 
 MAVEVENT_PARSE_FUNCS = {
+    # https://mavlink.io/en/messages/common.html#ATTITUDE
+    'ATTITUDE': lambda msg: {'ua_att': {
+        'roll': msg.roll, 'pitch': msg.pitch, 'yaw': msg.yaw
+    }},
     # https://mavlink.io/en/messages/common.html#GLOBAL_POSITION_INT
     'GLOBAL_POSITION_INT': lambda msg: {'ua_pos': {
         'lat': msg.lat / 10**7, 'lon': msg.lon / 10**7, 'alt': msg.alt / 1000,
@@ -23,6 +27,10 @@ MAVEVENT_PARSE_FUNCS = {
     'GLOBAL_POSITION_INT_COV': lambda msg: {'ua_pos': {
         'lat': msg.lat / 10**7, 'lon': msg.lon / 10**7, 'alt': msg.alt / 1000,
         'vlat': msg.vx / 100, 'vlon': msg.vy / 100, 'vz': -msg.vz / 100
+    }},
+    # https://mavlink.io/en/messages/common.html#BATTERY_STATUS
+    'BATTERY_STATUS': lambda msg: {'ua_batt': {
+        'volt': sum(volt for volt in msg.voltages if volt != 0xFFFF)
     }},
 }
 
