@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>WebSocket demo</title>
+        <title>MAVConsole</title>
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
             integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
             crossorigin=""/>
@@ -16,23 +16,30 @@
     <body>
         <p class="text">Hello world</p>
 
-        <div id="map" style="height: 480px;"></div>
+        <div id="map" style="height: 80vh;"></div>
         <script>
+            const ua_svg =
+                '<svg viewBox="0 0 100 100" width="50" height="50" xmlns="http://www.w3.org/2000/svg"><g>' +
+                '<path d="M 50 0 C 46 0 44 6 44 10 L 44 24 C 44 24 0 30 0 40 L 0 50 C 0 60 44 66 44 66 L 44 82 ' +
+                'L 30 92 L 30 100 L 50 96 L 70 100 L 70 92 L 56 82 L 56 66 C 56 66 100 60 100 50 L 100 40 ' +
+                'C 100 30 56 24 56 24 L 56 10 C 56 6 54 0 50 0 z M 44 36 L 44 54 C 44 54 14 50 14 46 L 14 44 ' +
+                'C 14 40 44 36 44 36 z M 56 36 C 56 36 86 40 86 44 L 86 46 C 86 50 56 54 56 54 L 56 36 z " />' +
+                '</g></svg>'
+            ;
+
             var mymap = L.map('map').setView([0., 0.], 1);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mymap);
 
-            plane_svg = '<svg viewBox="0 0 300 300" width="50" height="50" xmlns="http://www.w3.org/2000/svg"><g><path d="M134.875,19.74c0.04-22.771,34.363-22.771,34.34,0.642v95.563L303,196.354v35.306l-133.144-43.821v71.424l30.813,24.072v27.923l-47.501-14.764l-47.501,14.764v-27.923l30.491-24.072v-71.424L3,231.66v-35.306l131.875-80.409V19.74z"/></g></svg>';
-
-            var myIcon = L.divIcon({
+            var ua_icon = L.divIcon({
                 className: 'ua_icon',
-                html: plane_svg,
+                html: ua_svg,
                 iconSize: [50, 50],
                 iconAnchor: [25, 25]
             });
 
-            var marker = null;
+            var ua_marker = null;
 
             window.addEventListener("DOMContentLoaded", () => {
                 const websocket = new WebSocket("ws://localhost:8000/");
@@ -40,12 +47,18 @@
                     const event = JSON.parse(data);
 
                     if (event.hasOwnProperty('ua_pos')) {
-                        pos = L.latLng(event.ua_pos.lat, event.ua_pos.lon)
-                        if (marker === null) {
-                            marker = L.marker(pos, {icon: myIcon}).addTo(mymap);
+                        let pos = L.latLng(event.ua_pos.lat, event.ua_pos.lon)
+                        if (ua_marker === null) {
+                            ua_marker = L.marker(pos, {icon: ua_icon}).addTo(mymap);
                             mymap.setView(pos, 14)
                         } else {
-                            marker.setLatLng(pos);
+                            ua_marker.setLatLng(pos);
+                        }
+                    }
+                    if (event.hasOwnProperty('ua_att')) {
+                        let svgs = document.querySelectorAll('div.ua_icon svg');
+                        for (let i = 0; i < svgs.length; i++) {
+                            svgs[i].style.transform = "rotate(" + event.ua_att.yaw.toString() + "rad)";
                         }
                     }
                 };
