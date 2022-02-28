@@ -61,6 +61,37 @@
                             svgs[i].style.transform = "rotate(" + event.ua_att.yaw.toString() + "rad)";
                         }
                     }
+                    if (event.hasOwnProperty('airspace')) {
+                        L.geoJSON(event.airspace, {
+                            filter: function (feature) {
+                                //document.querySelectorAll('.text')[0].innerHTML = JSON.stringify(feature);
+                                return feature.hasOwnProperty('properties') &&
+                                       feature.properties.hasOwnProperty('lower_limit_altitude') &&
+                                       feature.properties.lower_limit_altitude == 0;
+                            },
+                            style: function (feature) {
+                                return {stroke: false, fill: true, color: '#ff4000', fillOpacity: 0.4};
+                            },
+                            onEachFeature: function (feature, layer) {
+                                if (
+                                    feature.hasOwnProperty('properties') &&
+                                    feature.properties.hasOwnProperty('name') &&
+                                    feature.properties.hasOwnProperty('airspace_code')
+                                ) {
+                                    layer.bindPopup(
+                                        feature.properties.name + " (" + feature.properties.airspace_code + ")"
+                                    );
+                                }
+                            }
+                        }).addTo(mymap);
+                    }
+                    if (event.hasOwnProperty('op_vol')) {
+                        L.geoJSON(event.op_vol, {
+                            style: function (feature) {
+                                return {stroke: true, fill: false, color: '#0040ff'};
+                            }
+                        }).addTo(mymap);
+                    }
                 };
             });
         </script>

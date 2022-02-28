@@ -1,0 +1,2 @@
+# Ignore downloaded geojson features
+*.geojson

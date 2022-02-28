@@ -70,10 +70,12 @@ async def mavevent_session(websocket, path):
     finally:
         mavevent_connections.remove(websocket)
 
-async def mavevent_serve(event_queue, host=None, port=None):
+async def mavevent_serve(event_queue, host=None, port=None, init_state=None):
     '''
     Serve events read from a queue via websockets
     '''
+    if init_state is not None:
+        mavevent_state.update(init_state)
     async with websockets.serve(mavevent_session, host, port):
         while True:
             try:
@@ -82,7 +84,10 @@ async def mavevent_serve(event_queue, host=None, port=None):
                 #websockets.broadcast(mavevent_connections, json.dumps(event))
                 event_str = json.dumps(event)
                 for conn in mavevent_connections:
-                    await conn.send(event_str)
+                    try:
+                        await conn.send(event_str)
+                    except websockets.exceptions.ConnectionClosed:
+                        pass
             except queue.Empty:
                 await asyncio.sleep(0.001)
 
@@ -105,6 +110,10 @@ argparser.add_argument(
     help='TCP port on which the server websocket server listens'
 )
 argparser.add_argument(
+    '-j', '--json', nargs='?', default=None,
+    help='JSON file to be read in and transmitted as initial state'
+)
+argparser.add_argument(
     'connection_string', metavar='CONNECTION_STRING',
     help=(
         'MAVLink connection string, '
@@ -113,9 +122,14 @@ argparser.add_argument(
 )
 args = argparser.parse_args()
 
+init_state = None
+if args.json is not None:
+    with open(args.json) as f:
+        init_state = json.load(f)
+
 mavevent_queue = queue.SimpleQueue()
 threading.Thread(
     target=mavevent_recv, args=(args.connection_string, mavevent_queue),
     daemon=True
 ).start()
-asyncio.run(mavevent_serve(mavevent_queue, args.host, args.port))
+asyncio.run(mavevent_serve(mavevent_queue, args.host, args.port, init_state))
